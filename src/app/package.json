@@ -1,8 +1,8 @@
 {
-  "name": "tutorial-rethinkdb-nodejs-crud",
+  "name": "km-docker-nodejs",
   "version": "0.0.1",
   "description": "",
-  "author": "Mark Watson <markwatsonatx@gmail.com>",
+  "author": "Parthu Kishen <pkishen@sysgain.com>",
   "main": "server.js",
   "scripts": {
     "start": "npm install && nodemon -L server.js"
@@ -13,6 +13,7 @@
     "ejs": "^2.4.2",
     "express": "^4.13.3",
     "nodemon": "^1.9.2",
-    "rethinkdb": "^2.3.2"
+    "rethinkdb": "^2.3.2",
+    "restify": "^4.1.1"
   }
 }
