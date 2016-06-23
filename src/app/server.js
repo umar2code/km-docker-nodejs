@@ -1,82 +1,30 @@
-var bodyParser = require('body-parser');
-var config = require('./config');
-var databaseController = require('./controllers/databaseController');
-var express = require('express');
-var gameController = require('./controllers/gameController');
-var r = require('rethinkdb');
 
-var app = express();
+var restify = require('restify');
+var server = restify.createServer();
+var keyName;
+var keyValue;
 
-(function(app) {
-    r.connect(config.rethinkdb, function(err, conn) {
-        if (err) {
-            console.log('Could not open a connection to initialize the database: ' + err.message);
-        }
-        else {
-            console.log('Connected.');
-            app.set('rethinkdb.conn', conn);
-            databaseController.createDatabase(conn, config.rethinkdb.db)
-                .then(function() {
-                    return databaseController.createTable(conn, 'games');
-                })
-                .catch(function(err) {
-                    console.log('Error creating database and/or table: ' + err);
-                })
-        }
-    });
-})(app);
 
-// set body parser for form data
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
+server.use(restify.bodyParser());
+server.use(restify.requestLogger());
 
-// set view engine and map views directory
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
+function respond(req, res, next) {
+  res.send('hello ' + req.params.name);
+  next();
+}
 
-// map requests
-app.get('/', function(req, res) {
-    gameController.getGames(req)
-        .then(function(games) {
-            res.render('index', {games: games});
-        });
-});
 
-app.get('/create', function(req, res) {
-    res.render('create', {});
-});
+function send(req, res, next) {
+   res.send('hello ' + req.params.name);
+   return next();
+ }
 
-app.get('/update', function(req, res) {
-    gameController.getGameById(req)
-        .then(function(game) {
-            res.render('update', {game: game});
-        });
-});
+ server.post('/key', function create(req, res, next) {
+     keyName = req.params.keyName;
+     keyValue = req.params.keyValue;
+     console.log("Value of Keys is "+keyName+"   "+keyValue);
 
-// form submits
-app.post('/create', function(req, res) {
-    gameController.createGame(req)
-        .then(function() {
-            res.redirect("/");
-        });
-});
-
-app.post('/update', function(req, res) {
-    gameController.updateGame(req)
-        .then(function() {
-            res.redirect("/");
-        });
-});
-
-app.post('/delete', function(req, res) {
-    gameController.deleteGame(req)
-        .then(function() {
-            res.redirect("/");
-        });
-});
-
-// start server on the specified port and binding host
-app.listen(config.express.port, '0.0.0.0', function() {
-  console.log("Server started.")
-});
+   res.send(201, Math.random().toString(36).substr(3, 8));
+   return next();
+ });
+ server.get('/key/:keyName', send);
