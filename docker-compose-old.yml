@@ -1,5 +1,11 @@
 version: '2'
 services:
+  db:
+    image: rethinkdb:latest
+    ports:  
+      - "38080:8081"
+      - "38015:28015"
+      - "39015:29015"
   web:
     image: node:latest    
     volumes:
@@ -8,3 +14,5 @@ services:
     command: npm start
     ports:
       - "33000:8080"
+    depends_on:
+      - db
