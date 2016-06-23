@@ -13,6 +13,6 @@ services:
     working_dir: /usr/src/app
     command: npm start
     ports:
-      - "33000:8080"
+      - "33001:8080"
     depends_on:
       - db
