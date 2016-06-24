@@ -47,8 +47,8 @@ var requestName=req.params.keyName;
       if(err) {
         return next(err);
       }
-      console.log("Result:"+result[0]);
-      res.send(result[0]);
+      console.log("Result:"+result[0].keyValue);
+      res.send(result[0].keyValue);
       return next();
     });
 
