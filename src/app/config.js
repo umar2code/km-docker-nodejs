@@ -3,6 +3,6 @@ module.exports = {
         host: "db",
         port: 28015,
         authKey: "",
-        db: "game"
+        db: "key"
     }
 }
