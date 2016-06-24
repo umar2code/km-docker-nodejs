@@ -1,0 +1,17 @@
+{
+  "name": "km-docker-nodejs",
+  "version": "0.0.1",
+  "description": "",
+  "author": "Parthu Kishen <pkishen@sysgain.com>",
+  "main": "server.js",
+  "scripts": {
+    "start": "npm install && nodemon -L server.js"
+  },
+  "dependencies": {
+    "bluebird": "^3.4.1",
+    "body-parser": "^1.15.2",
+    "nodemon": "^1.9.2",
+    "rethinkdb": "^2.3.2",
+    "restify": "^4.1.1"
+  }
+}
