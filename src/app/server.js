@@ -58,7 +58,7 @@ var requestName=req.params.keyName;
 server.post('/key', function create(req, res, next) {
      keyName = req.params.keyName;
      //keyValue = req.params.keyValue;
-     keyValue = new Buffer(req.params.keyValue).toString('base64');
+     keyValue = req.params.keyValue;
      console.log("Value of Key in rethinkdb is   "+keyValue);
 r.table('key').insert([
     { 
