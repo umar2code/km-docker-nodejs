@@ -57,8 +57,8 @@ var requestName=req.params.keyName;
   //this is for post operation, keyName and keyValue have to be specified in the body. 
 server.post('/key', function create(req, res, next) {
      keyName = req.params.keyName;
-     //keyValue = req.params.keyValue;
      keyValue = req.params.keyValue;
+     //keyValue = new Buffer(req.params.keyValue).toString('base64');
      console.log("Value of Key in rethinkdb is   "+keyValue);
 r.table('key').insert([
     { 
