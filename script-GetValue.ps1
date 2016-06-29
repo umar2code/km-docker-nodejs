@@ -53,8 +53,14 @@ workflow Get-KeyValue
     }
 
     #Connect to your Azure Account
-    Add-AzureRmAccount -Credential $Cred
-	
+    $Account = Add-AzureRmAccount -Credential $Cred
+	if(!$Account) {
+        Throw "Could not authenticate to Azure using the credential asset '${CredentialAssetName}'. Make sure the user name and password are correct."
+    }
+	else{
+		Write-Output "Successfully loggedin to the account"
+	}
+
 	
 
 $Account1 = $accountName
@@ -66,8 +72,14 @@ $response = Invoke-RestMethod -Uri $invokeUrl -Method Get -ContentType 'applicat
 	
 	Write-Output "API has been invoked. Response is :"
   Write-Output $response
-
-
+  
+  Write-Output "ACcount values are"
+  Write-Output $Account1
+  Write-Output $variableName
+    Write-Output $resourceGroupName
+  
+  
+ 
 	
 	Set-AzureRmAutomationVariable `
 		-AutomationAccountName $Account1 `
