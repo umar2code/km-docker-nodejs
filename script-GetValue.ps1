@@ -30,11 +30,11 @@ workflow Get-KeyValue
     
     [Parameter(Mandatory=$true)]
     [string] 
-    $resourceGroupName
+    $resourceGroupName,
 
     [Parameter(Mandatory=$true)]
     [string] 
-    $keyName
+    $keyName,
 
     [Parameter(Mandatory=$true)]
     [string] 
