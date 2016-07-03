@@ -24,7 +24,7 @@ r.connect(config.rethinkdb, function(err, conn) {
                 })
                 .catch(function(err) {
                     console.log('Error creating database and/or table: ' + err);
-                })
+                });
         }
     });
 
@@ -53,7 +53,7 @@ var requestName=req.params.keyName;
     });
 
   });
-};
+}
   //this is for post operation, keyName and keyValue have to be specified in the body. 
 server.post('/key', function create(req, res, next) {
      keyName = req.params.keyName;
