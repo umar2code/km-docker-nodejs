@@ -33,7 +33,7 @@ server.use(restify.requestLogger());
 
 //this function is for the get operation.
 
-function respond(req, res, next) {
+function getKey(req, res, next) {
 var requestName=req.params.keyName;
   console.log("Got a request with param: "+requestName );
 
@@ -55,9 +55,9 @@ var requestName=req.params.keyName;
   });
 }
   //this is for post operation, keyName and keyValue have to be specified in the body. 
-server.post('/key', function create(req, res, next) {
-     keyName = req.params.keyName;
-     keyValue = req.params.keyValue;
+function postKey(req, res, next) {
+    var keyName = req.params.keyName;
+     var keyValue = req.params.keyValue;
      //keyValue = new Buffer(req.params.keyValue).toString('base64');
      console.log("Value of Key in rethinkdb is   "+keyValue);
 r.table('key').insert([
@@ -72,10 +72,11 @@ r.table('key').insert([
     res.send(201, Math.random().toString(36).substr(3, 8));
    return next();
 });  
- });
+ }
 
 
- server.get('/key/:keyName', respond);
+ server.get('/key/:keyName', getKey);
+ server.post('/key', postKey);
 
  server.listen(8080, function() {
   console.log('%s listening at %s', server.name, server.url);
