@@ -35,6 +35,9 @@ r.connect(config.rethinkdb, function(err, conn) {
         }
     });
 
+
+
+
 server.use(restify.bodyParser());
 server.use(restify.requestLogger());
 
@@ -61,25 +64,27 @@ function getKey(req, res, next) {
 
   });
 }
-  //this is for post operation, keyName and keyValue have to be specified in the body. 
+//this is for post operation, keyName and keyValue have to be specified in the body. 
 function postKey(req, res, next) {
      var keyName = req.params.keyName;
      var keyValue = req.params.keyValue;
      //keyValue = new Buffer(req.params.keyValue).toString('base64');
      console.log("Value of Key in rethinkdb is   "+keyValue);
-r.table('keys').insert([
-    { 
-      keyName: keyName,
-      keyValue: keyValue,
-      timestamp: new Date()
-    }
-]).run(connection, function(err, result) {
-    if (err) throw err;
-    console.log(JSON.stringify(result, null, 2));
-    res.send(201, Math.random().toString(36).substr(3, 8));
-   return next();
-});  
+  r.table('keys').insert([
+      { 
+        keyName: keyName,
+        keyValue: keyValue,
+        timestamp: new Date()
+      }
+  ]).run(connection, function(err, result) {
+      if (err) throw err;
+      console.log(JSON.stringify(result, null, 2));
+      res.send(201, Math.random().toString(36).substr(3, 8));
+    return next();
+  });  
  }
+
+
 
 
 // This API generates passphrase less RSA Keypair based on the input comment(email provided).
@@ -87,28 +92,92 @@ r.table('keys').insert([
 
 function generateKeyPair(req, res, next){
 
-var comment = req.params.email;
-var userName = req.params.username;
-var pair = keypair();
-var publicKey = forge.pki.publicKeyFromPem(pair.public);
-var publicKeySSH = forge.ssh.publicKeyToOpenSSH(publicKey, comment);
+  var comment = req.params.email;
+  var userName = req.params.username;
+  var pair = keypair();
+  var publicKey = forge.pki.publicKeyFromPem(pair.public);
+  var publicKeySSH = forge.ssh.publicKeyToOpenSSH(publicKey, comment);
 
-//console.log(publicKeySSH);
-res.send(200, {
-  "publicKey": publicKeySSH,
-  "privateKey":pair.private
- });
-return next();
+  //console.log(publicKeySSH);
+  res.send(200, {
+    "publicKey": publicKeySSH,
+    "privateKey":pair.private
+  });
+  return next();
 
 
 }
 
 //This API stores the provided private key in the component. It also stores the information in the DB
+//input parameters are component, componentBaseUrl, ownerUserName, ownerPassword, keyName, publicKeyValue, privateKeyValue
 
 function setupComponentWithKey(req, res, next){
+if(req.params.component == "chefcc"){
+
+console.log("Setup request for ChefCompliance starting...");
+  var jsonObject = JSON.stringify({
+      "userid" : req.params.ownerUserName,
+      "password" : req.params.ownerPassword
+  });
+  var postheaders = {
+      'Content-Type' : 'application/json',
+      'Content-Length' : Buffer.byteLength(jsonObject, 'utf8')
+  };
+  // the post options
+  var optionspost = {
+      host : req.params.componentBaseUrl,
+      port : 443,
+      path : '/api/login',
+      method : 'POST',
+      headers : postheaders,
+      strictSSL:false,
+      rejectUnhauthorized : false
+  };
+
+  //console.info('Options prepared:');
+  //console.info(optionspost);
+  //console.info('Do the POST call');
+
+
+  // do the POST call
+  var reqPost = https.request(optionspost, function(response) {
+      //console.log("statusCode: ", res.statusCode);
+      // uncomment it for header details
+  //  console.log("headers: ", res.headers);
+
+      res.on('data', function(data) {
+          //console.info('POST result:\n');
+          process.stdout.write(data);
+          //console.info('\n\nPOST completed');
+  var AUTH='Bearer '+data;
+  console.log(AUTH);
+
+
+res.send(200, AUTH);
+return next();
 
 
 
+      });
+  });
+
+  // write the json data
+  reqPost.write(jsonObject);
+  reqPost.end();
+  reqPost.on('error', function(e) {
+      console.error(e);
+      res.send(400);
+      return next();
+
+  });
+
+}
+else{
+console.log("No other component is currently supported");
+res.send(400);
+return next();
+
+}
 
 }
 
