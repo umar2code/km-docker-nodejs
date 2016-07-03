@@ -1,11 +1,18 @@
 
+//setup all required modules
 var restify = require('restify');
-var server = restify.createServer();
 var r = require('rethinkdb');
+var https = require('https');
+var keypair = require('keypair');
+var forge = require('node-forge');
+
+//set env variable so that server is fine with api that orginate from unknown certs
+//this is specifically for VMs that are generated on the cloud and dont have a cert from CA
+process.env.NODE_TLS_REJECT_UNAUTHORIZED=0;
 var config = require('./config');
 var databaseController = require('./controllers/databaseController');
-var keyName;
-var keyValue;
+var server = restify.createServer();
+
 var connection = null;
 /*
 First step is to connect to the rethindb based on the config.js and then create a database called and a table called key if they donot exist. If they exist
@@ -75,8 +82,31 @@ r.table('key').insert([
  }
 
 
+// This API generates passphrase less RSA Keypair based on the input comment(email provided).
+//input email and username
+
+function generateKeyPair(req, res, next){
+
+var comment = req.params.email;
+var userName = req.params.username;
+var pair = keypair();
+var publicKey = forge.pki.publicKeyFromPem(pair.public);
+var publicKeySSH = forge.ssh.publicKeyToOpenSSH(publicKey, comment);
+
+//console.log(publicKeySSH);
+
+var response = {"publicKey": publicKeySSH,
+                "privateKey":pair.private };
+res.send(200, response);
+return next();
+
+
+}
+
+
  server.get('/key/:keyName', getKey);
  server.post('/key', postKey);
+ server.post('/securekeys/keypair',generateKeyPair);
 
  server.listen(8080, function() {
   console.log('%s listening at %s', server.name, server.url);
