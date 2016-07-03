@@ -40,7 +40,7 @@ r.connect(config.rethinkdb, function(err, conn) {
 
 server.use(restify.bodyParser());
 server.use(restify.requestLogger());
-
+server.use(restify.queryParser());
 //this function is for the get operation.
 
 function getKey(req, res, next) {
@@ -98,6 +98,8 @@ function generateKeyPair(req, res, next){
   var publicKey = forge.pki.publicKeyFromPem(pair.public);
   var publicKeySSH = forge.ssh.publicKeyToOpenSSH(publicKey, comment);
 
+//BUGFIX:if a key already exists with a key name a new one should not be generated.
+
 
   r.table('keys').insert([
           { 
@@ -106,7 +108,7 @@ function generateKeyPair(req, res, next){
             publicKeyName: keyName+'_public',
             privateKeyName: keyName+'_private',
             publicKeyValue: publicKeySSH,
-            privateKeyValue: pair.private,
+            privateKeyValue: JSON.stringify(pair.private),
             timestamp: new Date()
           }
       ]).run(connection, function(err, result) {
@@ -121,156 +123,192 @@ function generateKeyPair(req, res, next){
 //input parameters are component, componentBaseUrl, ownerUserName, ownerPassword, keyName
 
 function setupComponentPrivateKey(req, res, next){
-  if(req.params.component == "chefcc"){
+      if(req.params.component == "chefcc"){
 
-  console.log("Setup request for ChefCompliance starting...");
-    var jsonObject = JSON.stringify({
-        "userid" : req.params.ownerUserName,
-        "password" : req.params.ownerPassword
-    });
+      console.log("Setup request for ChefCompliance starting...");
+        var jsonObject = JSON.stringify({
+            "userid" : req.params.ownerUserName,
+            "password" : req.params.ownerPassword
+        });
 
-    console.log(jsonObject);
-    var postheaders = {
-        'Content-Type' : 'application/json',
-        'Content-Length' : Buffer.byteLength(jsonObject, 'utf8')
-    };
-    // the post options
-    var optionspost = {
-        host : req.params.componentBaseUrl,
-        port : 443,
-        path : '/api/login',
-        method : 'POST',
-        headers : postheaders,
-        strictSSL:false,
-        rejectUnhauthorized : false
-    };
+        console.log(jsonObject);
+        var postheaders = {
+            'Content-Type' : 'application/json',
+            'Content-Length' : Buffer.byteLength(jsonObject, 'utf8')
+        };
+        // the post options
+        var optionspost = {
+            host : req.params.componentBaseUrl,
+            port : 443,
+            path : '/api/login',
+            method : 'POST',
+            headers : postheaders,
+            strictSSL:false,
+            rejectUnhauthorized : false
+        };
 
-    //console.info('Options prepared:');
-    //console.info(optionspost);
-    //console.info('Do the POST call');
-
-
-    // do the POST call
-    var reqPost = https.request(optionspost, function(res1) {
-        console.log("statusCode: ", res1.statusCode);
-        // uncomment it for header details
-    //console.log("headers: ", res.headers);
-
-        res1.on('data', function(data) {
-            //console.info('POST result:\n');
-            //process.stdout.write(data);
-            //console.info('\n\nPOST completed');
-    var AUTH='Bearer '+data;
-    //console.log(AUTH);
+        //console.info('Options prepared:');
+        //console.info(optionspost);
+        //console.info('Do the POST call');
 
 
-  r.db('key').table('keys').filter({baseKeyName:req.params.keyName,username:req.params.ownerUserName })
-  .orderBy(r.desc("timestamp"))
-  .pluck('privateKeyValue').run(connection, function(err, cursor) {
-    if(err) {
-      send(500,"Error fetching the key from DB");
-      return next(err);
-    }
+        // do the POST call
+        var reqPost = https.request(optionspost, function(res1) {
+            console.log("statusCode: ", res1.statusCode);
+            // uncomment it for header details
+        //console.log("headers: ", res.headers);
 
-    cursor.toArray(function(err, result) {
-      if(err) {
-        send(500,"Error fetching the key from DB");
-        return next(err);
-      }
-      console.log("Result:  \n"+result[0].privateKeyValue);
+            res1.on('data', function(data) {
+                //console.info('POST result:\n');
+                //process.stdout.write(data);
+                //console.info('\n\nPOST completed');
+        var AUTH='Bearer '+data;
+        //console.log(AUTH);
+
+      r.db('key').table('keys').filter({baseKeyName:req.params.keyName,username:req.params.ownerUserName })
+      .orderBy(r.desc("timestamp"))
+      .pluck('privateKeyValue').run(connection, function(err, cursor) {
+        if(err) {
+          send(500,"Error fetching the key from DB");
+          return next(err);
+        }
+
+        cursor.toArray(function(err, result) {
+          if(err) {
+            send(500,"Error fetching the key from DB");
+            return next(err);
+          }
+          console.log("Result:  \n"+result[0].privateKeyValue);
 
 
 
-      var jsonObjectKey = JSON.stringify({
-                        "name" : req.params.keyName+'_private',
-                        "private" : result[0].privateKeyValue
+          var jsonObjectKey = JSON.stringify({
+                            "name" : req.params.keyName+'_private',
+                            "private" : result[0].privateKeyValue
+                        });
+    console.log("here???");
+          var postheadersKey = {
+                    'Content-Type' : 'application/json',
+                    'Content-Length' : Buffer.byteLength(jsonObjectKey, 'utf8'),
+                    'Authorization': AUTH
+                };
+
+
+          var optionspostKey = {
+                    host : req.params.componentBaseUrl,
+                    port : 443,
+                    path : '/api/owners/'+req.params.ownerUserName+'/keys',
+                    method : 'POST',
+                    headers : postheadersKey,
+                    strictSSL:false,
+                    rejectUnhauthorized : false
+                };
+
+          
+                var reqPostKey = https.request(optionspostKey, function(res2) {
+                    console.log("statusCode: ", res2.statusCode);
+                    // uncomment it for header details
+                //console.log("headers: ", res.headers);
+
+                    res2.on('data', function(d) {
+                        console.info('POST result from api call to save they key:\n');
+                        process.stdout.write(d);
+                        console.info('\n\nPOST completed');
+//NEED TO ADD PASASWORD BACK IN THE TABLE
+
+                        res.send(200);
+                        return next();
                     });
-console.log("here???");
-      var postheadersKey = {
-                'Content-Type' : 'application/json',
-                'Content-Length' : Buffer.byteLength(jsonObjectKey, 'utf8'),
-                'Authorization': AUTH
-            };
-
-
-      var optionspostKey = {
-                host : req.params.componentBaseUrl,
-                port : 443,
-                path : '/api/owners/'+req.params.ownerUserName+'/keys',
-                method : 'POST',
-                headers : postheadersKey,
-                strictSSL:false,
-                rejectUnhauthorized : false
-            };
-
-      
-            var reqPostKey = https.request(optionspostKey, function(res2) {
-                console.log("statusCode: ", res2.statusCode);
-                // uncomment it for header details
-            //console.log("headers: ", res.headers);
-
-                res2.on('data', function(d) {
-                    console.info('POST result from api call to save they key:\n');
-                    process.stdout.write(d);
-                    console.info('\n\nPOST completed');
-                    res.send(200);
-                    return next();
                 });
-            });
 
-            // write the json data
-            reqPostKey.write(jsonObjectKey);
-            reqPostKey.end();
-            reqPostKey.on('error', function(e) {
-              console.error(e);
-              res.send(400);
-              return next();
+                // write the json data
+                reqPostKey.write(jsonObjectKey);
+                reqPostKey.end();
+                reqPostKey.on('error', function(e) {
+                  console.error(e);
+                  res.send(400);
+                  return next();
+                    
+                });
                 
+
+          
+        });
+
+      });
+
+                
+
+                
+
+                
+
+
+
+
             });
-            
+        });
 
-      
-    });
-
-  });
-
-            
-
-            
-
-            
-
-
-
+        // write the json data
+        reqPost.write(jsonObject);
+        reqPost.end();
+        reqPost.on('error', function(e) {
+          console.log("in here:errro???");
+            console.error(e);
+            res.send(400);
+            return next();
 
         });
-    });
 
-    // write the json data
-    reqPost.write(jsonObject);
-    reqPost.end();
-    reqPost.on('error', function(e) {
-      console.log("in here:errro???");
-        console.error(e);
-        res.send(400);
-        return next();
+      }
+      else{
+      console.log("No other component is currently supported");
+      res.send(400);
+      return next();
 
-    });
-
-  }
-  else{
-  console.log("No other component is currently supported");
-  res.send(400);
-  return next();
-
-  }
+      }
 
 }
 
+
+
+
+// The get method retrieves the RSA Keys based on the keyname and adminusername provided for the component. By Default only public key is returned.So only username needs to be passed. 
+function getpublicKey(req, res, next){
+//
+r.db('key').table('keys').filter({baseKeyName:req.params.keyname,username:req.params.username })
+      .orderBy(r.desc("timestamp"))
+      .pluck('publicKeyValue').run(connection, function(err, cursor) {
+        if(err) {
+          res.send(500,"Error fetching the key from DB");
+          return next(err);
+        }
+
+        cursor.toArray(function(err, result) {
+          if(err) {
+            res.send(500,"Error fetching the key from DB");
+            return next(err);
+          }
+          console.log("Result:  \n"+JSON.stringify(result[0].publicKeyValue));
+          res.send(result[0].publicKeyValue);
+          return next();
+
+        });
+
+
+
+});
+
+
+}
+
+
+
  server.get('/key/:keyName', getKey);
  server.post('/key', postKey);
- server.post('/keys/keypair',generateKeyPair);
- server.post('/keys/:component/keypairs', setupComponentPrivateKey);
+ server.post('/keys/:component/:username/keypairs',generateKeyPair);
+ server.post('/keys/:component/:username/component', setupComponentPrivateKey);
+ server.get('/keys/:component/:username/keypairs/:keyname', getpublicKey);
  
 
  server.listen(8080, function() {
