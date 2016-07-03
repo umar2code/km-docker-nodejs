@@ -27,7 +27,7 @@ r.connect(config.rethinkdb, function(err, conn) {
            connection = conn;
             databaseController.createDatabase(conn, config.rethinkdb.db)
                 .then(function() {
-                    return databaseController.createTable(conn, 'key');
+                    return databaseController.createTable(conn, 'keys');
                 })
                 .catch(function(err) {
                     console.log('Error creating database and/or table: ' + err);
@@ -45,7 +45,7 @@ var requestName=req.params.keyName;
   console.log("Got a request with param: "+requestName );
 
 
-  r.db('key').table('key').filter({keyName:requestName}).orderBy(r.desc("timestamp")).pluck('keyValue').run(connection, function(err, cursor) {
+  r.db('key').table('keys').filter({keyName:requestName}).orderBy(r.desc("timestamp")).pluck('keyValue').run(connection, function(err, cursor) {
     if(err) {
       return next(err);
     }
@@ -67,7 +67,7 @@ function postKey(req, res, next) {
      var keyValue = req.params.keyValue;
      //keyValue = new Buffer(req.params.keyValue).toString('base64');
      console.log("Value of Key in rethinkdb is   "+keyValue);
-r.table('key').insert([
+r.table('keys').insert([
     { 
       keyName: keyName,
       keyValue: keyValue,
@@ -102,6 +102,9 @@ return next();
 
 
 }
+
+//This API stores the provided private key in the component. It also stores the information in the DB
+
 
 
  server.get('/key/:keyName', getKey);
