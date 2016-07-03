@@ -108,7 +108,7 @@ function generateKeyPair(req, res, next){
             publicKeyName: keyName+'_public',
             privateKeyName: keyName+'_private',
             publicKeyValue: publicKeySSH,
-            privateKeyValue: JSON.stringify(pair.private),
+            privateKeyValue: pair.private,
             timestamp: new Date()
           }
       ]).run(connection, function(err, result) {
