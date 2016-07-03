@@ -41,7 +41,7 @@ server.use(restify.requestLogger());
 //this function is for the get operation.
 
 function getKey(req, res, next) {
-var requestName=req.params.keyName;
+  var requestName=req.params.keyName;
   console.log("Got a request with param: "+requestName );
 
 
@@ -63,7 +63,7 @@ var requestName=req.params.keyName;
 }
   //this is for post operation, keyName and keyValue have to be specified in the body. 
 function postKey(req, res, next) {
-    var keyName = req.params.keyName;
+     var keyName = req.params.keyName;
      var keyValue = req.params.keyValue;
      //keyValue = new Buffer(req.params.keyValue).toString('base64');
      console.log("Value of Key in rethinkdb is   "+keyValue);
@@ -94,10 +94,10 @@ var publicKey = forge.pki.publicKeyFromPem(pair.public);
 var publicKeySSH = forge.ssh.publicKeyToOpenSSH(publicKey, comment);
 
 //console.log(publicKeySSH);
-
-var response = {"publicKey": publicKeySSH,
-                "privateKey":pair.private };
-res.send(200, response);
+res.send(200, {
+  "publicKey": publicKeySSH,
+  "privateKey":pair.private
+ });
 return next();
 
 
@@ -105,11 +105,18 @@ return next();
 
 //This API stores the provided private key in the component. It also stores the information in the DB
 
+function setupComponentWithKey(req, res, next){
+
+
+
+
+}
 
 
  server.get('/key/:keyName', getKey);
  server.post('/key', postKey);
- server.post('/securekeys/keypair',generateKeyPair);
+ server.post('/keys/keypair',generateKeyPair);
+ server.post('/keys/:component/keypairs', setupComponentWithKey);
 
  server.listen(8080, function() {
   console.log('%s listening at %s', server.name, server.url);
