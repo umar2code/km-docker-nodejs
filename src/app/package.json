@@ -12,6 +12,9 @@
     "body-parser": "^1.15.2",
     "nodemon": "^1.9.2",
     "rethinkdb": "^2.3.2",
-    "restify": "^4.1.1"
+    "restify": "^4.1.1",
+    "keypair":"~1.0.0",
+    "node-forge": "*",
+    "async":"^2.0.0-rc.2"
   }
 }
