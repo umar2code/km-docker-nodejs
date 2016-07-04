@@ -469,15 +469,9 @@ function bootstrapComplianceNode(req, res, next){
                 }
                 console.log("Result:  \n"+JSON.stringify(result[0].publicKeyValue));
                 callback(null,result[0].publicKeyValue);
-                console.log('here1');
               });
-                
-                console.log('here2');
-                
-
+                                
                 });
-                                console.log('here3');
-
                   
                 }
 
