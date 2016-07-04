@@ -67,11 +67,12 @@ function getKey(req, res, next) {
 }
 //this is for post operation, keyName and keyValue have to be specified in the body. 
 function postKey(req, res, next) {
+  console.log("Parameters:",req.params);
      var keyName = req.params.keyName;
      var keyValue = req.params.keyValue;
      //keyValue = new Buffer(req.params.keyValue).toString('base64');
-     console.log("Value of Key in rethinkdb is   "+keyValue);
-  r.table('keys').insert([
+     console.log("Value of Key in rethinkdb is   "+JSON.stringify(keyValue));
+  r.db('key').table('keys').insert([
           { 
             keyName: keyName,
             keyValue: keyValue,
@@ -117,7 +118,7 @@ function generateKeyPair(req, res, next){
         ]).run(connection, function(err, result) {
             if (err) throw err;
             console.log(JSON.stringify(result, null, 2));
-            res.send(200, Math.random().toString(36).substr(3, 8));
+            res.send(200, pair.private);
           return next();
         }); 
 }
