@@ -398,6 +398,7 @@ function bootstrapComplianceNode(req, res, next){
               console.log("Response code from GetENVs: "+responseCode);
 
               if(responseCode == "200"){
+                console.log("No need to create new environemt. It already exists");
                 // no need to create a new environemt. Send the env Name to next task
                 callback(null,req.params.env);
 
@@ -427,8 +428,6 @@ function bootstrapComplianceNode(req, res, next){
             });
 
           }
-          else callback(err);
-
           });
     }],
 
@@ -456,6 +455,7 @@ function bootstrapComplianceNode(req, res, next){
             chefComplianceAPIAdaptor(reqparams,function(err,data,responseCode){
 
                 console.log("Response code from bootstrap: "+responseCode);
+                if(responseCode == "200"){
                 r.db('key').table('keys').filter({baseKeyName:req.params.keyName,username:req.params.username })
                   .orderBy(r.desc("timestamp"))
                   .pluck('publicKeyValue').run(connection, function(err, cursor) {
@@ -470,23 +470,28 @@ function bootstrapComplianceNode(req, res, next){
                 console.log("Result:  \n"+JSON.stringify(result[0].publicKeyValue));
                 callback(null,result[0].publicKeyValue);
               });
-
-
-
+                                
                 });
+                  
+                }
+
+                console.log('here4');
 
             });
-          
+                          console.log('here5');
+
     }]
 
   }, function(err, results) {
+                    console.log('here6');
+
     if(err){
       console.log('err = ', err);
       res.send(400,err);
       return next();
     }
     else{
-      //console.log('results in the final callback= ', JSON.stringify(results.get_complianceadmin_apitoken));
+      console.log('results in the final callback= ', JSON.stringify(results.get_complianceadmin_apitoken));
       res.send(200,results.bootstrap_node_compliance);
       return next();
 
@@ -562,7 +567,7 @@ function getAPIToken(reqparams,callback){
 }
 
 
-function chefComplianceAPIAdaptor(reqparams,callback){
+function chefComplianceAPIAdaptor(reqparams,fncallback){
 
   console.log("Inside request for chefcomplianceAdaptor...");
         var jsonObject = JSON.stringify(reqparams.body);
@@ -597,14 +602,14 @@ function chefComplianceAPIAdaptor(reqparams,callback){
         //console.log("headers: ", res.headers);
         if(res1.statusCode == "403" || res1.statusCode == "500" ){
 
-          callback(null,"",res1.statusCode);
+          fncallback(null,"",res1.statusCode);
 
         }
             res1.on('data', function(data) {
                 //console.info('POST result:\n');
                 process.stdout.write(data);
                 console.info('\n\nPOST or GET completed');
-        callback(null,data.toString('utf8'),res1.statusCode);
+        fncallback(null,data.toString('utf8'),res1.statusCode);
 
             });
 
@@ -616,7 +621,7 @@ function chefComplianceAPIAdaptor(reqparams,callback){
         reqMethod.on('error', function(e) {
           console.log("in here:errro???");
             console.error(e);
-            callback(e);
+            fncallback(e);
         });
 }
 

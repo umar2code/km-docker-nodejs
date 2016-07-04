@@ -14,5 +14,7 @@ services:
     command: npm start
     ports:
       - "33001:8080"
+      - "5858:5858"
+
     depends_on:
       - db
